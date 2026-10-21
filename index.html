@@ -24,21 +24,11 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: fill; /* Adatta perfettamente l'immagine alla matrice LED */
-      opacity: 0;
-      
-      /* ACCELERAZIONE HARDWARE HARDWARE (GPU) */
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
-      -webkit-backface-visibility: hidden;
-      backface-visibility: hidden;
-      will-change: opacity;
-      
-      /* Transizione alleggerita per evitare scatti */
-      transition: opacity 0.8s linear;
+      object-fit: fill;
+      display: none; /* Nessuna animazione o dissolvenza */
     }
     .active {
-      opacity: 1;
+      display: block; /* Cambio istantaneo */
     }
   </style>
 </head>
@@ -67,11 +57,8 @@
 
         imageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
-          // =w1920-h1080 forza Google a comprimere e ridimensionare l'immagine al volo
           img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1920-h1080";
           img.className = 'slide' + (idx === 0 ? ' active' : '');
-          img.loading = "eager";
-          
           gallery.appendChild(img);
         });
 
