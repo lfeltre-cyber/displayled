@@ -24,10 +24,10 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: fill;
+      object-fit: fill; /* Adatta perfettamente l'immagine alla matrice LED */
       opacity: 0;
       
-      /* FORZA ACCELERAZIONE HARDWARE (GPU) PER SCHEDE LOW-SPEC */
+      /* ACCELERAZIONE HARDWARE HARDWARE (GPU) */
       -webkit-transform: translateZ(0);
       transform: translateZ(0);
       -webkit-backface-visibility: hidden;
@@ -65,13 +65,11 @@
 
         var gallery = document.getElementById('gallery');
 
-        // Pre-caricamento e rendering
         imageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
-          img.src = "https://lh3.googleusercontent.com/d/" + id;
+          // =w1920-h1080 forza Google a comprimere e ridimensionare l'immagine al volo
+          img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1920-h1080";
           img.className = 'slide' + (idx === 0 ? ' active' : '');
-          
-          // Forza il rendering preliminare nella RAM della scheda
           img.loading = "eager";
           
           gallery.appendChild(img);
@@ -82,16 +80,14 @@
 
         if (slides.length > 1) {
           setInterval(function() {
-            // Rimuove la classe attiva dalla slide corrente
             slides[current].classList.remove('active');
-            // Passa alla slide successiva
             current = (current + 1) % slides.length;
             slides[current].classList.add('active');
           }, 8000);
         }
       })
       .catch(function(err) {
-        console.error("Errore caricamento:", err);
+        console.error("Errore caricamento foto:", err);
       });
   </script>
 </body>
