@@ -24,7 +24,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: fill; /* Adatta l'immagine all'intera superficie LED */
+      object-fit: fill; /* Si adatta perfettamente alle dimensioni della matrice LED */
       opacity: 0;
       transition: opacity 1.5s ease-in-out;
     }
@@ -38,60 +38,62 @@
   <div id="gallery"></div>
 
   <script>
-    // ID della cartella Google Drive
     var FOLDER_ID = "1KoWWPvf4bvecrHlrS2NFdWj9Ylb5p4nj";
 
-    // Lettura del parametro feed dall'URL (?feed=1 o ?feed=2)
     var urlParams = new URLSearchParams(window.location.search);
     var feed = urlParams.get('feed') || '1';
 
-    // URL per la vista incorporata di Google Drive
-    var driveUrl = "https://drive.google.com/embeddedfolderview?id=" + FOLDER_ID + "#list";
+    // Chiamata all'API pubblica della cartella di Google Drive via corsproxy
+    var targetUrl = "https://drive.google.com/drive/folders/" + FOLDER_ID;
+    var proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
 
-    // Utilizzo di un proxy CORS aperto per bypassare i blocchi del browser Taurus
-    var corsProxy = "https://api.allorigins.win/raw?url=" + encodeURIComponent(driveUrl);
-
-    fetch(corsProxy)
-      .then(function(response) {
-        if (!response.ok) throw new Error("Errore di rete");
-        return response.text();
-      })
+    fetch(proxyUrl)
+      .then(function(res) { return res.text(); })
       .then(function(html) {
-        // Estrazione degli ID delle immagini contenute nella cartella
-        var regex = /"https:\/\/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)\/view"/g;
+        // Estrazione degli ID delle immagini dalla pagina della cartella
+        var regex = /https:\/\/lh3\.googleusercontent\.com\/drive-viewer\/[a-zA-Z0-9_-]+/g;
+        var matches = html.match(regex) || [];
+        
+        // Se non trova il nuovo formato CDN, cerca gli ID standard dei file
+        var idRegex = /"([a-zA-Z0-9_-]{28,35})"/g;
         var imageIds = [];
         var match;
 
-        while ((match = regex.exec(html)) !== null) {
-          if (imageIds.indexOf(match[1]) === -1) {
-            imageIds.push(match[1]);
+        while ((match = idRegex.exec(html)) !== null) {
+          var id = match[1];
+          // Filtra solo gli ID validi evitando chiavi di sistema
+          if (id.indexOf("_") === -1 && id.length > 30 && imageIds.indexOf(id) === -1) {
+            imageIds.push(id);
           }
         }
 
         if (imageIds.length === 0) {
-          console.error("Nessuna immagine trovata nella cartella.");
-          return;
+          console.log("Nessuna immagine trovata, uso fallback id parser");
+          // Fallback con pattern standard
+          var altRegex = /\/file\/d\/([a-zA-Z0-9_-]+)/g;
+          while ((match = altRegex.exec(html)) !== null) {
+            if (imageIds.indexOf(match[1]) === -1) {
+              imageIds.push(match[1]);
+            }
+          }
         }
 
-        // Gestione dell'ordine in base al feed
+        // Gestione ordine immagini
         if (feed === "1") {
-          imageIds.sort(function() { return 0.5 - Math.random(); }); // Ordine casuale
+          imageIds.sort(function() { return 0.5 - Math.random(); });
         } else if (feed === "2") {
-          imageIds.reverse(); // Ordine inverso
+          imageIds.reverse();
         }
 
         var gallery = document.getElementById('gallery');
 
-        // Creazione degli elementi <img> nativi
         imageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
-          // Collegamento diretto al server CDN delle immagini Google
           img.src = "https://lh3.googleusercontent.com/d/" + id;
           img.className = 'slide' + (idx === 0 ? ' active' : '');
           gallery.appendChild(img);
         });
 
-        // Avvio dello slideshow ciclico
         var current = 0;
         var slides = document.querySelectorAll('.slide');
 
@@ -100,11 +102,11 @@
             slides[current].classList.remove('active');
             current = (current + 1) % slides.length;
             slides[current].classList.add('active');
-          }, 8000); // 8 secondi per ogni immagine
+          }, 8000); // 8 secondi a foto
         }
       })
       .catch(function(err) {
-        console.error("Errore caricamento Drive: ", err);
+        console.error("Errore caricamento:", err);
       });
   </script>
 </body>
