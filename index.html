@@ -24,7 +24,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: fill; /* Adatta l'immagine all'intera superficie della matrice LED */
+      object-fit: fill;
       opacity: 0;
       transition: opacity 1.5s ease-in-out;
     }
@@ -38,45 +38,46 @@
   <div id="gallery"></div>
 
   <script>
-    // 1. Inserisci qui gli ID dei file delle tue foto su Google Drive
-    // Puoi recuperarli dal link di condivisione di ogni immagine (es. drive.google.com/file/d/ ID_QUI /view)
-    var imageIds = [
-      "1KoWWPvf4bvecrHlrS2NFdWj9Ylb5p4nj", // Sostituisci con gli ID reali delle foto
-      "1ABC_XYZ_ESEMPIO_ID_2",
-      "1ABC_XYZ_ESEMPIO_ID_3"
-    ];
+    // INCOLLA QUI TRA LE VIRGOLETTE L'URL DI APPS SCRIPT CREATO AL PUNTO 1:
+    var API_URL = "INSERISCI_QUI_IL_TUO_LINK_APPS_SCRIPT";
 
     var urlParams = new URLSearchParams(window.location.search);
     var feed = urlParams.get('feed') || '1';
 
-    // Gestione ordine
-    if (feed === "1") {
-      imageIds.sort(function() { return 0.5 - Math.random(); });
-    } else if (feed === "2") {
-      imageIds.reverse();
-    }
+    fetch(API_URL)
+      .then(function(res) { return res.json(); })
+      .then(function(imageIds) {
+        if (!imageIds || imageIds.length === 0) return;
 
-    var gallery = document.getElementById('gallery');
+        if (feed === "1") {
+          imageIds.sort(function() { return 0.5 - Math.random(); });
+        } else if (feed === "2") {
+          imageIds.reverse();
+        }
 
-    // Creazione elementi img diretti
-    imageIds.forEach(function(id, idx) {
-      var img = document.createElement('img');
-      img.src = "https://lh3.googleusercontent.com/d/" + id;
-      img.className = 'slide' + (idx === 0 ? ' active' : '');
-      gallery.appendChild(img);
-    });
+        var gallery = document.getElementById('gallery');
 
-    // Slideshow ciclico
-    var current = 0;
-    var slides = document.querySelectorAll('.slide');
+        imageIds.forEach(function(id, idx) {
+          var img = document.createElement('img');
+          img.src = "https://lh3.googleusercontent.com/d/" + id;
+          img.className = 'slide' + (idx === 0 ? ' active' : '');
+          gallery.appendChild(img);
+        });
 
-    if (slides.length > 1) {
-      setInterval(function() {
-        slides[current].classList.remove('active');
-        current = (current + 1) % slides.length;
-        slides[current].classList.add('active');
-      }, 8000); // Cambio ogni 8 secondi
-    }
+        var current = 0;
+        var slides = document.querySelectorAll('.slide');
+
+        if (slides.length > 1) {
+          setInterval(function() {
+            slides[current].classList.remove('active');
+            current = (current + 1) % slides.length;
+            slides[current].classList.add('active');
+          }, 8000);
+        }
+      })
+      .catch(function(err) {
+        console.error("Errore caricamento foto:", err);
+      });
   </script>
 </body>
 </html>
