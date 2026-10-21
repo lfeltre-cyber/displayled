@@ -24,9 +24,18 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: fill; /* Adatta l'immagine all'intera superficie del maxischermo LED */
+      object-fit: fill;
       opacity: 0;
-      transition: opacity 1.5s ease-in-out;
+      
+      /* FORZA ACCELERAZIONE HARDWARE (GPU) PER SCHEDE LOW-SPEC */
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      will-change: opacity;
+      
+      /* Transizione alleggerita per evitare scatti */
+      transition: opacity 0.8s linear;
     }
     .active {
       opacity: 1;
@@ -38,7 +47,6 @@
   <div id="gallery"></div>
 
   <script>
-    // Link Apps Script diretto
     var API_URL = "https://script.google.com/macros/s/AKfycbxzi6Yh9pRwv7IkCx93tp_hi8_ue-7iZNgt7N3awptc-rPVoeI7no1E1MozeCr0lCvT/exec";
 
     var urlParams = new URLSearchParams(window.location.search);
@@ -49,37 +57,41 @@
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
-        // Gestione ordine
         if (feed === "1") {
-          imageIds.sort(function() { return 0.5 - Math.random(); }); // Ordine casuale
+          imageIds.sort(function() { return 0.5 - Math.random(); });
         } else if (feed === "2") {
-          imageIds.reverse(); // Ordine inverso
+          imageIds.reverse();
         }
 
         var gallery = document.getElementById('gallery');
 
-        // Creazione tag img nativi caricati direttamente dalla CDN di Google
+        // Pre-caricamento e rendering
         imageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
           img.src = "https://lh3.googleusercontent.com/d/" + id;
           img.className = 'slide' + (idx === 0 ? ' active' : '');
+          
+          // Forza il rendering preliminare nella RAM della scheda
+          img.loading = "eager";
+          
           gallery.appendChild(img);
         });
 
-        // Slideshow ciclico ogni 8 secondi
         var current = 0;
         var slides = document.querySelectorAll('.slide');
 
         if (slides.length > 1) {
           setInterval(function() {
+            // Rimuove la classe attiva dalla slide corrente
             slides[current].classList.remove('active');
+            // Passa alla slide successiva
             current = (current + 1) % slides.length;
             slides[current].classList.add('active');
           }, 8000);
         }
       })
       .catch(function(err) {
-        console.error("Errore recupero elenco immagini:", err);
+        console.error("Errore caricamento:", err);
       });
   </script>
 </body>
