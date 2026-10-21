@@ -17,6 +17,9 @@
       position: relative;
       width: 100vw;
       height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .slide {
       position: absolute;
@@ -25,10 +28,10 @@
       width: 100vw;
       height: 100vh;
       object-fit: fill;
-      display: none; /* Cambio netto senza animazioni */
+      display: none; /* Cambio istantaneo senza animazioni */
     }
     .active {
-      display: block; /* Cambio istantaneo */
+      display: block;
     }
   </style>
 </head>
@@ -47,17 +50,29 @@
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
+        // Gestione avanzata dei diversi FEED
         if (feed === "1") {
+          // FEED 1: Casuale puro
           imageIds.sort(function() { return 0.5 - Math.random(); });
         } else if (feed === "2") {
+          // FEED 2: Inverso
           imageIds.reverse();
+        } else if (feed === "3") {
+          // FEED 3: Ordine pari/dispari (prende una foto sì e una no)
+          var evens = imageIds.filter(function(_, idx) { return idx % 2 === 0; });
+          var odds = imageIds.filter(function(_, idx) { return idx % 2 !== 0; });
+          imageIds = evens.concat(odds);
+        } else if (feed === "4") {
+          // FEED 4: Casuale con seed fisso inverso
+          imageIds.sort().reverse().sort(function() { return 0.3 - Math.random(); });
         }
 
         var gallery = document.getElementById('gallery');
 
         imageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
-          img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1920-h1080";
+          // Formato quadrato 1:1 (=w1080-h1080)
+          img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
           img.className = 'slide' + (idx === 0 ? ' active' : '');
           gallery.appendChild(img);
         });
@@ -70,7 +85,7 @@
             slides[current].classList.remove('active');
             current = (current + 1) % slides.length;
             slides[current].classList.add('active');
-          }, 60000); // 60.000 ms = 1 minuto esatto a foto
+          }, 60000); // 1 minuto a foto
         }
       })
       .catch(function(err) {
