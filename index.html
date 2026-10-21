@@ -24,7 +24,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: fill;
+      object-fit: fill; /* Adatta l'immagine all'intera superficie della matrice LED */
       opacity: 0;
       transition: opacity 1.5s ease-in-out;
     }
@@ -38,96 +38,45 @@
   <div id="gallery"></div>
 
   <script>
-    var FOLDER_ID = "1KoWWPvf4bvecrHlrS2NFdWj9Ylb5p4nj";
+    // 1. Inserisci qui gli ID dei file delle tue foto su Google Drive
+    // Puoi recuperarli dal link di condivisione di ogni immagine (es. drive.google.com/file/d/ ID_QUI /view)
+    var imageIds = [
+      "1KoWWPvf4bvecrHlrS2NFdWj9Ylb5p4nj", // Sostituisci con gli ID reali delle foto
+      "1ABC_XYZ_ESEMPIO_ID_2",
+      "1ABC_XYZ_ESEMPIO_ID_3"
+    ];
+
     var urlParams = new URLSearchParams(window.location.search);
     var feed = urlParams.get('feed') || '1';
 
-    // Genera l'URL per l'API pubblica di Google Drive
-    var rssUrl = "https://drive.google.com/site/drivenotes/rr/drive/folders/" + FOLDER_ID;
-    var apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://raw.githubusercontent.com/lfeltre-cyber/displayled/main/feed.xml");
-
-    // Usa l'API di fallback per estrarre direttamente i file multimediali
-    fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent("https://drive.google.com/embeddedfolderview?id=" + FOLDER_ID))
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        var images = [];
-        if (data.items) {
-          data.items.forEach(function(item) {
-            var match = item.link.match(/\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) images.push(match[1]);
-          });
-        }
-        initSlideshow(images);
-      })
-      .catch(function() {
-        // Backup diretto tramite endpoint UC
-        fetch("https://lh3.googleusercontent.com/d/" + FOLDER_ID)
-          .catch(function() {});
-      });
-
-    // Se l'API non risponde, usa la lista dinamica via CDN
-    function loadDriveImages() {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", "https://api.allorigins.win/get?url=" + encodeURIComponent("https://drive.google.com/drive/folders/" + FOLDER_ID), true);
-      xhr.onload = function() {
-        if (xhr.status === 200) {
-          var response = JSON.parse(xhr.responseText);
-          var html = response.contents;
-          var regex = /"https:\/\/lh3\.googleusercontent\.com\/drive-viewer\/([^"]+)"/g;
-          var ids = [];
-          var match;
-          
-          var idRegex = /data-id="([a-zA-Z0-9_-]{25,})"/g;
-          while ((match = idRegex.exec(html)) !== null) {
-            if (ids.indexOf(match[1]) === -1) ids.push(match[1]);
-          }
-          
-          if (ids.length === 0) {
-            var fallbackRegex = /([a-zA-Z0-9_-]{33})/g;
-            while ((match = fallbackRegex.exec(html)) !== null) {
-              if (ids.indexOf(match[1]) === -1 && match[1].indexOf("1KoWWPvf") === -1) {
-                ids.push(match[1]);
-              }
-            }
-          }
-          initSlideshow(ids);
-        }
-      };
-      xhr.send();
+    // Gestione ordine
+    if (feed === "1") {
+      imageIds.sort(function() { return 0.5 - Math.random(); });
+    } else if (feed === "2") {
+      imageIds.reverse();
     }
 
-    function initSlideshow(imageIds) {
-      if (!imageIds || imageIds.length === 0) return;
+    var gallery = document.getElementById('gallery');
 
-      if (feed === "1") {
-        imageIds.sort(function() { return 0.5 - Math.random(); });
-      } else if (feed === "2") {
-        imageIds.reverse();
-      }
+    // Creazione elementi img diretti
+    imageIds.forEach(function(id, idx) {
+      var img = document.createElement('img');
+      img.src = "https://lh3.googleusercontent.com/d/" + id;
+      img.className = 'slide' + (idx === 0 ? ' active' : '');
+      gallery.appendChild(img);
+    });
 
-      var gallery = document.getElementById('gallery');
-      gallery.innerHTML = '';
+    // Slideshow ciclico
+    var current = 0;
+    var slides = document.querySelectorAll('.slide');
 
-      imageIds.forEach(function(id, idx) {
-        var img = document.createElement('img');
-        img.src = "https://lh3.googleusercontent.com/d/" + id;
-        img.className = 'slide' + (idx === 0 ? ' active' : '');
-        gallery.appendChild(img);
-      });
-
-      var current = 0;
-      var slides = document.querySelectorAll('.slide');
-
-      if (slides.length > 1) {
-        setInterval(function() {
-          slides[current].classList.remove('active');
-          current = (current + 1) % slides.length;
-          slides[current].classList.add('active');
-        }, 8000);
-      }
+    if (slides.length > 1) {
+      setInterval(function() {
+        slides[current].classList.remove('active');
+        current = (current + 1) % slides.length;
+        slides[current].classList.add('active');
+      }, 8000); // Cambio ogni 8 secondi
     }
-
-    loadDriveImages();
   </script>
 </body>
 </html>
