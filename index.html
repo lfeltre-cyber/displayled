@@ -24,7 +24,7 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      object-fit: fill;
+      object-fit: fill; /* Adatta l'immagine all'intera superficie del maxischermo LED */
       opacity: 0;
       transition: opacity 1.5s ease-in-out;
     }
@@ -38,8 +38,8 @@
   <div id="gallery"></div>
 
   <script>
-    // INCOLLA QUI TRA LE VIRGOLETTE L'URL DI APPS SCRIPT CREATO AL PUNTO 1:
-    var API_URL = "INSERISCI_QUI_IL_TUO_LINK_APPS_SCRIPT";
+    // Link Apps Script diretto
+    var API_URL = "https://script.google.com/macros/s/AKfycbxzi6Yh9pRwv7IkCx93tp_hi8_ue-7iZNgt7N3awptc-rPVoeI7no1E1MozeCr0lCvT/exec";
 
     var urlParams = new URLSearchParams(window.location.search);
     var feed = urlParams.get('feed') || '1';
@@ -49,14 +49,16 @@
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
+        // Gestione ordine
         if (feed === "1") {
-          imageIds.sort(function() { return 0.5 - Math.random(); });
+          imageIds.sort(function() { return 0.5 - Math.random(); }); // Ordine casuale
         } else if (feed === "2") {
-          imageIds.reverse();
+          imageIds.reverse(); // Ordine inverso
         }
 
         var gallery = document.getElementById('gallery');
 
+        // Creazione tag img nativi caricati direttamente dalla CDN di Google
         imageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
           img.src = "https://lh3.googleusercontent.com/d/" + id;
@@ -64,6 +66,7 @@
           gallery.appendChild(img);
         });
 
+        // Slideshow ciclico ogni 8 secondi
         var current = 0;
         var slides = document.querySelectorAll('.slide');
 
@@ -76,7 +79,7 @@
         }
       })
       .catch(function(err) {
-        console.error("Errore caricamento foto:", err);
+        console.error("Errore recupero elenco immagini:", err);
       });
   </script>
 </body>
