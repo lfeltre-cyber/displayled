@@ -25,7 +25,7 @@
       width: 100vw;
       height: 100vh;
       object-fit: fill;
-      display: none; /* Nessuna animazione o dissolvenza */
+      display: none; /* Cambio netto senza animazioni */
     }
     .active {
       display: block; /* Cambio istantaneo */
@@ -70,7 +70,7 @@
             slides[current].classList.remove('active');
             current = (current + 1) % slides.length;
             slides[current].classList.add('active');
-          }, 8000);
+          }, 60000); // 60.000 ms = 1 minuto esatto a foto
         }
       })
       .catch(function(err) {
