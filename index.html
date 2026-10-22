@@ -43,65 +43,61 @@
     var API_URL = "https://script.google.com/macros/s/AKfycbxzi6Yh9pRwv7IkCx93tp_hi8_ue-7iZNgt7N3awptc-rPVoeI7no1E1MozeCr0lCvT/exec";
 
     var urlParams = new URLSearchParams(window.location.search);
-    var feed = parseInt(urlParams.get('feed')) || 1;
+    var feed = urlParams.get('feed') || '1';
 
     fetch(API_URL)
       .then(function(res) { return res.json(); })
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
-        var total = imageIds.length;
-        var gallery = document.getElementById('gallery');
-
-        // Sfalsamento per evitare sovrapposizioni tra i 4 feed
-        var offset = Math.floor((total / 4) * (feed - 1));
-
-        var shiftedImageIds = [];
-        for (var i = 0; i < total; i++) {
-          shiftedImageIds.push(imageIds[(i + offset) % total]);
+        // Gestione avanzata dei 4 FEED separati
+        if (feed === "1") {
+          imageIds.sort(function() { return 0.5 - Math.random(); });
+        } else if (feed === "2") {
+          imageIds.reverse();
+        } else if (feed === "3") {
+          var evens = imageIds.filter(function(_, idx) { return idx % 2 === 0; });
+          var odds = imageIds.filter(function(_, idx) { return idx % 2 !== 0; });
+          imageIds = evens.concat(odds);
+        } else if (feed === "4") {
+          imageIds.sort().reverse().sort(function() { return 0.3 - Math.random(); });
         }
 
-        var validSlides = [];
-        var loadedCount = 0;
+        var gallery = document.getElementById('gallery');
 
-        shiftedImageIds.forEach(function(id) {
-          var tempImg = new Image();
-          tempImg.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
+        imageIds.forEach(function(id, idx) {
+          var img = document.createElement('img');
+          img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
+          img.className = 'slide' + (idx === 0 ? ' active' : '');
           
-          // Aggiunge la foto alla galleria SOLO se il caricamento da Google va a buon fine
-          tempImg.onload = function() {
-            var img = document.createElement('img');
-            img.src = this.src;
-            img.className = 'slide';
-            
-            // Se è la prima foto valida caricata, la rende subito visibile
-            if (validSlides.length === 0) {
-              img.classList.add('active');
-            }
-            
-            gallery.appendChild(img);
-            validSlides.push(img);
+          // Se un'immagine è rotta o non caricabile, la marca per evitare lo sfondo nero
+          img.onerror = function() {
+            this.classList.remove('active');
+            this.setAttribute('data-broken', 'true');
           };
 
-          // Se il file non è un'immagine o è corrotto/cancellato, lo ignora completamente
-          tempImg.onerror = function() {
-            console.warn("Immagine non valida o non trovata ID:", id);
-          };
+          gallery.appendChild(img);
         });
 
-        // Gestione della rotazione ogni 60 secondi basata SOLO sulle immagini valide
         var current = 0;
 
         setInterval(function() {
-          if (validSlides.length > 1) {
-            validSlides[current].classList.remove('active');
-            current = (current + 1) % validSlides.length;
-            validSlides[current].classList.add('active');
-          }
-        }, 60000); // 1 minuto per foto
+          var slides = document.querySelectorAll('.slide');
+          if (slides.length <= 1) return;
+
+          slides[current].classList.remove('active');
+          
+          var attempts = 0;
+          do {
+            current = (current + 1) % slides.length;
+            attempts++;
+          } while (slides[current].getAttribute('data-broken') === 'true' && attempts < slides.length);
+
+          slides[current].classList.add('active');
+        }, 60000); // 1 minuto a foto
       })
       .catch(function(err) {
-        console.error("Errore recupero API:", err);
+        console.error("Errore caricamento foto:", err);
       });
   </script>
 </body>
