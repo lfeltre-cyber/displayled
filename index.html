@@ -43,36 +43,33 @@
     var API_URL = "https://script.google.com/macros/s/AKfycbxzi6Yh9pRwv7IkCx93tp_hi8_ue-7iZNgt7N3awptc-rPVoeI7no1E1MozeCr0lCvT/exec";
 
     var urlParams = new URLSearchParams(window.location.search);
-    var feed = urlParams.get('feed') || '1';
+    var feed = parseInt(urlParams.get('feed')) || 1;
 
     fetch(API_URL)
       .then(function(res) { return res.json(); })
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
-        // Gestione avanzata FEED
-        if (feed === "1") {
-          imageIds.sort(function() { return 0.5 - Math.random(); });
-        } else if (feed === "2") {
-          imageIds.reverse();
-        } else if (feed === "3") {
-          var evens = imageIds.filter(function(_, idx) { return idx % 2 === 0; });
-          var odds = imageIds.filter(function(_, idx) { return idx % 2 !== 0; });
-          imageIds = evens.concat(odds);
-        } else if (feed === "4") {
-          imageIds.sort().reverse().sort(function() { return 0.3 - Math.random(); });
-        }
-
+        var total = imageIds.length;
         var gallery = document.getElementById('gallery');
 
-        imageIds.forEach(function(id, idx) {
+        // Calcola lo sfalsamento fisso per ciascun feed (Feed 1 = 0%, Feed 2 = 25%, Feed 3 = 50%, Feed 4 = 75%)
+        var offset = Math.floor((total / 4) * (feed - 1));
+
+        // Riordina l'array partendo dal punto sfalsato
+        var shiftedImageIds = [];
+        for (var i = 0; i < total; i++) {
+          shiftedImageIds.push(imageIds[(i + offset) % total]);
+        }
+
+        shiftedImageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
           img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
           img.className = 'slide' + (idx === 0 ? ' active' : '');
           
-          // GESTIONE ERRORE: Se l'immagine non si carica, salta automaticamente la foto guasta
+          // Gestione errore: rimuove le foto non valide per evitare riquadri neri
           img.onerror = function() {
-            this.parentNode.removeChild(this);
+            if (this.parentNode) this.parentNode.removeChild(this);
           };
 
           gallery.appendChild(img);
