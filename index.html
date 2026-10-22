@@ -43,54 +43,65 @@
     var API_URL = "https://script.google.com/macros/s/AKfycbxzi6Yh9pRwv7IkCx93tp_hi8_ue-7iZNgt7N3awptc-rPVoeI7no1E1MozeCr0lCvT/exec";
 
     var urlParams = new URLSearchParams(window.location.search);
-    var feed = urlParams.get('feed') || '1';
+    var feed = parseInt(urlParams.get('feed')) || 1;
 
     fetch(API_URL)
       .then(function(res) { return res.json(); })
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
-        // Gestione avanzata FEED
-        if (feed === "1") {
-          imageIds.sort(function() { return 0.5 - Math.random(); });
-        } else if (feed === "2") {
-          imageIds.reverse();
-        } else if (feed === "3") {
-          var evens = imageIds.filter(function(_, idx) { return idx % 2 === 0; });
-          var odds = imageIds.filter(function(_, idx) { return idx % 2 !== 0; });
-          imageIds = evens.concat(odds);
-        } else if (feed === "4") {
-          imageIds.sort().reverse().sort(function() { return 0.3 - Math.random(); });
-        }
-
+        var total = imageIds.length;
         var gallery = document.getElementById('gallery');
 
-        imageIds.forEach(function(id, idx) {
-          var img = document.createElement('img');
-          img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
-          img.className = 'slide' + (idx === 0 ? ' active' : '');
+        // Sfalsamento per evitare sovrapposizioni tra i 4 feed
+        var offset = Math.floor((total / 4) * (feed - 1));
+
+        var shiftedImageIds = [];
+        for (var i = 0; i < total; i++) {
+          shiftedImageIds.push(imageIds[(i + offset) % total]);
+        }
+
+        var validSlides = [];
+        var loadedCount = 0;
+
+        shiftedImageIds.forEach(function(id) {
+          var tempImg = new Image();
+          tempImg.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
           
-          // GESTIONE ERRORE: Se l'immagine non si carica, salta automaticamente la foto guasta
-          img.onerror = function() {
-            this.parentNode.removeChild(this);
+          // Aggiunge la foto alla galleria SOLO se il caricamento da Google va a buon fine
+          tempImg.onload = function() {
+            var img = document.createElement('img');
+            img.src = this.src;
+            img.className = 'slide';
+            
+            // Se è la prima foto valida caricata, la rende subito visibile
+            if (validSlides.length === 0) {
+              img.classList.add('active');
+            }
+            
+            gallery.appendChild(img);
+            validSlides.push(img);
           };
 
-          gallery.appendChild(img);
+          // Se il file non è un'immagine o è corrotto/cancellato, lo ignora completamente
+          tempImg.onerror = function() {
+            console.warn("Immagine non valida o non trovata ID:", id);
+          };
         });
 
+        // Gestione della rotazione ogni 60 secondi basata SOLO sulle immagini valide
         var current = 0;
 
         setInterval(function() {
-          var slides = document.querySelectorAll('.slide');
-          if (slides.length > 1) {
-            slides[current].classList.remove('active');
-            current = (current + 1) % slides.length;
-            slides[current].classList.add('active');
+          if (validSlides.length > 1) {
+            validSlides[current].classList.remove('active');
+            current = (current + 1) % validSlides.length;
+            validSlides[current].classList.add('active');
           }
         }, 60000); // 1 minuto per foto
       })
       .catch(function(err) {
-        console.error("Errore caricamento foto:", err);
+        console.error("Errore recupero API:", err);
       });
   </script>
 </body>
