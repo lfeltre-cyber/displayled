@@ -31,7 +31,7 @@
       display: none;
     }
     .active {
-      display: block;
+      display: block !important;
     }
   </style>
 </head>
@@ -50,7 +50,7 @@
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
-        // Gestione avanzata dei 4 FEED separati
+        // Algoritmi per i 4 Feed
         if (feed === "1") {
           imageIds.sort(function() { return 0.5 - Math.random(); });
         } else if (feed === "2") {
@@ -64,40 +64,48 @@
         }
 
         var gallery = document.getElementById('gallery');
+        var loadedSlides = [];
 
-        imageIds.forEach(function(id, idx) {
-          var img = document.createElement('img');
-          img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
-          img.className = 'slide' + (idx === 0 ? ' active' : '');
+        // Precaricamento sicuro in background
+        imageIds.forEach(function(id) {
+          var img = new Image();
+          var srcUrl = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
           
-          // Se un'immagine è rotta o non caricabile, la marca per evitare lo sfondo nero
-          img.onerror = function() {
-            this.classList.remove('active');
-            this.setAttribute('data-broken', 'true');
+          img.onload = function() {
+            var slideImg = document.createElement('img');
+            slideImg.src = srcUrl;
+            slideImg.className = 'slide';
+            
+            // La prima immagine valida scaricata viene mostrata subito
+            if (loadedSlides.length === 0) {
+              slideImg.classList.add('active');
+            }
+            
+            gallery.appendChild(slideImg);
+            loadedSlides.push(slideImg);
           };
 
-          gallery.appendChild(img);
+          img.onerror = function() {
+            console.warn("Ignorata immagine non caricabile (ID: " + id + ")");
+          };
+
+          img.src = srcUrl;
         });
 
         var current = 0;
 
+        // Rotazione di 60 secondi
         setInterval(function() {
-          var slides = document.querySelectorAll('.slide');
-          if (slides.length <= 1) return;
-
-          slides[current].classList.remove('active');
-          
-          var attempts = 0;
-          do {
+          var slides = gallery.querySelectorAll('.slide');
+          if (slides.length > 1) {
+            slides[current].classList.remove('active');
             current = (current + 1) % slides.length;
-            attempts++;
-          } while (slides[current].getAttribute('data-broken') === 'true' && attempts < slides.length);
-
-          slides[current].classList.add('active');
-        }, 60000); // 1 minuto a foto
+            slides[current].classList.add('active');
+          }
+        }, 60000);
       })
       .catch(function(err) {
-        console.error("Errore caricamento foto:", err);
+        console.error("Errore recupero lista immagini:", err);
       });
   </script>
 </body>
