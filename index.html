@@ -28,7 +28,7 @@
       width: 100vw;
       height: 100vh;
       object-fit: fill;
-      display: none; /* Cambio istantaneo senza animazioni */
+      display: none;
     }
     .active {
       display: block;
@@ -50,20 +50,16 @@
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
-        // Gestione avanzata dei diversi FEED
+        // Gestione avanzata FEED
         if (feed === "1") {
-          // FEED 1: Casuale puro
           imageIds.sort(function() { return 0.5 - Math.random(); });
         } else if (feed === "2") {
-          // FEED 2: Inverso
           imageIds.reverse();
         } else if (feed === "3") {
-          // FEED 3: Ordine pari/dispari (prende una foto sì e una no)
           var evens = imageIds.filter(function(_, idx) { return idx % 2 === 0; });
           var odds = imageIds.filter(function(_, idx) { return idx % 2 !== 0; });
           imageIds = evens.concat(odds);
         } else if (feed === "4") {
-          // FEED 4: Casuale con seed fisso inverso
           imageIds.sort().reverse().sort(function() { return 0.3 - Math.random(); });
         }
 
@@ -71,22 +67,27 @@
 
         imageIds.forEach(function(id, idx) {
           var img = document.createElement('img');
-          // Formato quadrato 1:1 (=w1080-h1080)
           img.src = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
           img.className = 'slide' + (idx === 0 ? ' active' : '');
+          
+          // GESTIONE ERRORE: Se l'immagine non si carica, salta automaticamente la foto guasta
+          img.onerror = function() {
+            this.parentNode.removeChild(this);
+          };
+
           gallery.appendChild(img);
         });
 
         var current = 0;
-        var slides = document.querySelectorAll('.slide');
 
-        if (slides.length > 1) {
-          setInterval(function() {
+        setInterval(function() {
+          var slides = document.querySelectorAll('.slide');
+          if (slides.length > 1) {
             slides[current].classList.remove('active');
             current = (current + 1) % slides.length;
             slides[current].classList.add('active');
-          }, 60000); // 1 minuto a foto
-        }
+          }
+        }, 60000); // 1 minuto per foto
       })
       .catch(function(err) {
         console.error("Errore caricamento foto:", err);
