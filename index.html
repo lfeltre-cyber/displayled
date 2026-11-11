@@ -40,7 +40,7 @@
   <div id="gallery"></div>
 
   <script>
-    var API_URL = "https://script.google.com/macros/s/AKfycbxzi6Yh9pRwv7IkCx93tp_hi8_ue-7iZNgt7N3awptc-rPVoeI7no1E1MozeCr0lCvT/exec";
+    var API_URL = "https://script.google.com/macros/s/AKfycbw8GRyrluIhy0VoHa4I2CxVs8F7i3Wih-aldNqcCsyk7S00R-tEFLnudcnLTN9TwUH-/exec";
 
     var urlParams = new URLSearchParams(window.location.search);
     var feed = urlParams.get('feed') || '1';
@@ -50,7 +50,7 @@
       .then(function(imageIds) {
         if (!imageIds || imageIds.length === 0) return;
 
-        // Algoritmi per i 4 Feed
+        // Gestione feed
         if (feed === "1") {
           imageIds.sort(function() { return 0.5 - Math.random(); });
         } else if (feed === "2") {
@@ -66,27 +66,25 @@
         var gallery = document.getElementById('gallery');
         var loadedSlides = [];
 
-        // Precaricamento sicuro in background
         imageIds.forEach(function(id) {
           var img = new Image();
           var srcUrl = "https://lh3.googleusercontent.com/d/" + id + "=w1080-h1080";
-          
+
           img.onload = function() {
             var slideImg = document.createElement('img');
             slideImg.src = srcUrl;
             slideImg.className = 'slide';
-            
-            // La prima immagine valida scaricata viene mostrata subito
+
             if (loadedSlides.length === 0) {
               slideImg.classList.add('active');
             }
-            
+
             gallery.appendChild(slideImg);
             loadedSlides.push(slideImg);
           };
 
           img.onerror = function() {
-            console.warn("Ignorata immagine non caricabile (ID: " + id + ")");
+            console.warn("File non valido o non caricabile saltato (ID: " + id + ")");
           };
 
           img.src = srcUrl;
@@ -94,7 +92,6 @@
 
         var current = 0;
 
-        // Rotazione di 60 secondi
         setInterval(function() {
           var slides = gallery.querySelectorAll('.slide');
           if (slides.length > 1) {
@@ -105,7 +102,7 @@
         }, 60000);
       })
       .catch(function(err) {
-        console.error("Errore recupero lista immagini:", err);
+        console.error("Errore nel recupero della lista immagini:", err);
       });
   </script>
 </body>
